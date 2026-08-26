@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8080",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "build": "node tools/build.mjs && node tools/build.mjs --fragment"
   },
   "repository": {
     "type": "git",

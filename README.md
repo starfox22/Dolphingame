@@ -9,7 +9,7 @@ this repo is generated in code at runtime. The whole game is HTML, CSS and JavaS
 no engine, no build step, no downloads.
 
 ```
-open index.html through any static server — that's the entire install
+download dist/abyssal.html and open it — that's the entire install
 ```
 
 ---
@@ -107,8 +107,24 @@ the water, and the sludge plumes pouring from the outfall pipes dry up entirely.
 
 ## Running it
 
-The game uses ES modules, so it needs to be served over HTTP rather than opened
-straight off the filesystem.
+### The easy way — one file, no server
+
+**[`dist/abyssal.html`](dist/abyssal.html)** is the whole game in a single
+self-contained file, about 260 KB. Download it and open it. That's the entire
+install.
+
+- **Laptop** — double-click it. It opens in your browser and runs offline.
+- **Android** — save it to your phone, then open it from Files and choose your
+  browser. Turn the phone sideways or leave it upright; both work.
+- **iPhone** — Safari won't open a downloaded `.html` from Files directly. Serve
+  it instead (below), or host it somewhere.
+
+No install, no network, no permissions. Everything it needs is in the file.
+
+### From source
+
+The `src/` tree is ES modules, so it needs to be served over HTTP — browsers
+refuse `type="module"` over `file://`.
 
 ```bash
 npm start                 # python3 -m http.server 8080
@@ -118,8 +134,25 @@ python3 -m http.server 8080
 
 Then open <http://localhost:8080>.
 
-To play it on your phone on the same network, serve it and browse to your machine's
-LAN address — or push to a branch and let the included GitHub Pages workflow host it.
+To play it on your phone over your own network, serve it and browse to your
+machine's LAN address — or push to a branch and let the included GitHub Pages
+workflow host it. Served over HTTPS, "Add to Home Screen" gives you a
+fullscreen, chromeless app.
+
+### Rebuilding the single file
+
+```bash
+npm run build
+```
+
+`tools/build.mjs` inlines `styles.css` and bundles every module into one classic
+script. It doesn't concatenate them — that would merge their scopes and let
+same-named module-level constants collide — but wraps each in a function
+registered by path, so module scoping survives intact.
+
+Two outputs: `dist/abyssal.html` (a full standalone document) and
+`dist/abyssal.fragment.html` (body content only, for hosts that supply their own
+document shell).
 
 ### Graphics quality
 
@@ -134,6 +167,8 @@ phones.
 
 ```
 index.html               shell, HUD markup, overlays
+tools/build.mjs          bundles everything into one self-contained file
+dist/abyssal.html        the built single-file game (no server needed)
 src/
   styles.css             all UI chrome; safe-area aware, responsive
   main.js                bootstrap, screen flow, settings, persistence

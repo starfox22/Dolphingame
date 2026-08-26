@@ -4,3 +4,6 @@ _shot.mjs
 _play.mjs
 _diag.mjs
 .DS_Store
+
+# built single-file bundles are committed; local test harnesses are not
+_*.mjs

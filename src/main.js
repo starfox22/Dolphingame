@@ -297,6 +297,13 @@ addEventListener('resize', onResize);
 addEventListener('orientationchange', onResize);
 if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 
+// When the page is embedded (an iframe, a preview pane), the window may
+// never fire `resize` even as the frame around it changes size. Watching
+// the canvas directly is the only thing that catches that case.
+if (window.ResizeObserver) {
+  new ResizeObserver(onResize).observe(dom.canvas);
+}
+
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     if (game.state === 'playing') doPause();
