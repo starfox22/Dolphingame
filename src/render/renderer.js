@@ -16,7 +16,7 @@
    enough to hold 60 fps on a mid-range phone.
    ============================================================ */
 
-import { clamp01, lerp, sampleRamp, rgba, rgb, TAU } from '../core/math.js';
+import { clamp01, lerp, sampleRamp, rgba, rgb, TAU, smoothstep } from '../core/math.js';
 
 /* Water colour by normalised depth. Hand-tuned so the transition
    from turquoise to abyssal indigo reads as continuous. */
@@ -470,49 +470,55 @@ export class Renderer {
     }
 
     // How far below the surface the dapple is still visible, in px.
-    const reach = Math.min(this.H, maxDepth * 0.34 * s);
+    const reach = Math.min(this.H * 1.4, maxDepth * 0.34 * s);
     const top = Math.max(0, surfaceY);
     const bottom = Math.min(this.H, surfaceY + reach);
     if (bottom <= top) return;
 
-    ctx.save();
-    // Hard clip at the waterline — caustics in the sky look like fog.
-    ctx.beginPath();
-    ctx.rect(0, top, this.W, bottom - top);
-    ctx.clip();
-    ctx.globalCompositeOperation = 'lighter';
+    /* The dapple has to fade out with depth rather than stop on a line.
+       It is drawn in horizontal bands of decreasing alpha to do that.
 
-    for (let l = 0; l < layers; l++) {
-      const sc = (l === 0 ? 0.9 : 1.55) * this.dpr * this.q.scale;
-      const spd = l === 0 ? 1 : -0.62;
-      const a = (l === 0 ? 0.085 : 0.05) * depthFade;
+       The obvious shortcut — one fill, then a `destination-out` gradient
+       to erase the bottom of it — is wrong here: these caustics composite
+       straight onto the scene, so erasing punches a hole through
+       everything already drawn and leaves a hard seam across the frame.
+       Banding costs a few extra pattern fills and composites correctly. */
+    const BANDS = 5;
+    for (let b = 0; b < BANDS; b++) {
+      // Alpha at the middle of this band, easing to nothing at `bottom`.
+      const bandAlpha = 1 - smoothstep((b + 0.5) / BANDS);
+      if (bandAlpha < 0.015) continue;
+
+      const y0 = top + (bottom - top) * (b / BANDS);
+      const y1 = top + (bottom - top) * ((b + 1) / BANDS);
 
       ctx.save();
-      ctx.globalAlpha = a;
-      // Vertical squash: light bands stretch as they descend.
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.translate(0, surfaceY);
-      ctx.scale(sc, sc * 2.1);
-      ctx.translate(
-        (-cam.x * s * 0.35 + t * 11 * spd) / sc,
-        (Math.sin(t * 0.4 + l) * 5 + t * 2.4 * spd) / (sc * 2.1)
-      );
-      ctx.fillStyle = this.causticPattern;
-      ctx.fillRect(-300, -20, this.W / sc + 600, reach / (sc * 2.1) + 300);
+      ctx.beginPath();
+      ctx.rect(0, y0, this.W, y1 - y0 + 1);   // +1 px so bands can't hairline
+      ctx.clip();
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let l = 0; l < layers; l++) {
+        const sc = (l === 0 ? 0.9 : 1.55) * this.dpr * this.q.scale;
+        const spd = l === 0 ? 1 : -0.62;
+        const a = (l === 0 ? 0.085 : 0.05) * depthFade * bandAlpha;
+
+        ctx.save();
+        ctx.globalAlpha = a;
+        // Vertical squash: light bands stretch as they descend.
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.translate(0, surfaceY);
+        ctx.scale(sc, sc * 2.1);
+        ctx.translate(
+          (-cam.x * s * 0.35 + t * 11 * spd) / sc,
+          (Math.sin(t * 0.4 + l) * 5 + t * 2.4 * spd) / (sc * 2.1)
+        );
+        ctx.fillStyle = this.causticPattern;
+        ctx.fillRect(-300, -20, this.W / sc + 600, reach / (sc * 2.1) + 300);
+        ctx.restore();
+      }
       ctx.restore();
     }
-
-    // Fade the dapple out with depth instead of ending on a hard line.
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.globalCompositeOperation = 'destination-out';
-    const fade = ctx.createLinearGradient(0, top, 0, bottom);
-    fade.addColorStop(0, 'rgba(0,0,0,0)');
-    fade.addColorStop(0.55, 'rgba(0,0,0,0)');
-    fade.addColorStop(1, 'rgba(0,0,0,1)');
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, top, this.W, bottom - top);
-
-    ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
 
