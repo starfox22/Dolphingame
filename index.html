@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#04121f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="description" content="ABYSSAL — dive as a dolphin, clean the ocean, heal the world." />
+<title>ABYSSAL — Ocean Guardian</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐬</text></svg>" />
+<link rel="stylesheet" href="src/styles.css" />
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="game" aria-label="Game canvas"></canvas>
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden" aria-hidden="true">
+    <div class="hud-top">
+      <div class="hud-left">
+        <div id="scoreWrap" class="score-wrap">
+          <div class="score-label">SCORE</div>
+          <div id="score" class="score-value">0</div>
+        </div>
+        <div id="comboWrap" class="combo-wrap">
+          <div id="comboText" class="combo-text">x1</div>
+          <div class="combo-bar"><i id="comboFill"></i></div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button id="btnPause" class="icon-btn" aria-label="Pause">
+          <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="hud-meters">
+      <div class="meter meter-air" id="airMeter">
+        <svg class="meter-ico" viewBox="0 0 24 24"><path d="M12 2.5c3.6 4.4 6.5 8 6.5 11.4a6.5 6.5 0 1 1-13 0C5.5 10.5 8.4 6.9 12 2.5z"/></svg>
+        <div class="meter-track"><i id="airFill" class="meter-fill air"></i></div>
+      </div>
+      <div class="meter meter-boost" id="boostMeter">
+        <svg class="meter-ico" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg>
+        <div class="meter-track"><i id="boostFill" class="meter-fill boost"></i></div>
+      </div>
+    </div>
+
+    <div class="hud-objective">
+      <div id="zoneName" class="zone-name">SUNLIT SHALLOWS</div>
+      <div class="health-row">
+        <span class="health-label">OCEAN HEALTH</span>
+        <div class="health-track"><i id="healthFill"></i></div>
+        <span id="healthPct" class="health-pct">0%</span>
+      </div>
+    </div>
+
+    <div id="toastLayer" class="toast-layer"></div>
+    <div id="depthTag" class="depth-tag">0m</div>
+
+    <!-- Touch controls -->
+    <div id="touch" class="touch-layer">
+      <div id="stickZone" class="stick-zone">
+        <div id="stickBase" class="stick-base"><div id="stickKnob" class="stick-knob"></div></div>
+      </div>
+      <div class="action-cluster">
+        <button id="btnSonar" class="action-btn sonar" aria-label="Sonar">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.5M16.2 16.2a6 6 0 0 0 0-8.5M4.8 4.8a10 10 0 0 0 0 14.4M19.2 19.2a10 10 0 0 0 0-14.4"/></svg>
+        </button>
+        <button id="btnBoost" class="action-btn boost" aria-label="Boost">
+          <svg viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TITLE ============ -->
+  <div id="titleScreen" class="overlay">
+    <div class="title-inner">
+      <div class="logo">
+        <div class="logo-main">ABYSSAL</div>
+        <div class="logo-sub">O C E A N &nbsp; G U A R D I A N</div>
+      </div>
+      <p class="tagline">The tide remembers who cleaned it.</p>
+      <button id="btnPlay" class="primary-btn">
+        <span>DIVE IN</span>
+      </button>
+      <div class="title-row">
+        <button id="btnHow" class="ghost-btn">How to play</button>
+        <button id="btnAudio" class="ghost-btn" aria-pressed="true">Sound: On</button>
+      </div>
+      <div id="bestLine" class="best-line"></div>
+    </div>
+    <div class="credit">Procedural graphics &amp; audio · No assets, all code</div>
+  </div>
+
+  <!-- ============ HOW TO PLAY ============ -->
+  <div id="howScreen" class="overlay hidden">
+    <div class="panel">
+      <h2>How to play</h2>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-ico">🎯</div>
+          <h3>Collect the trash</h3>
+          <p>Sweep bottles, cans, nets and tyres off the seabed. Chain pickups fast to build a score multiplier.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-ico">🫧</div>
+          <h3>Watch your air</h3>
+          <p>Dolphins breathe. Surface before the air meter empties — breaching at speed refills it instantly.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-ico">📡</div>
+          <h3>Echolocate</h3>
+          <p>Ping the dark. Sonar reveals buried trash, hidden caves and trapped animals through the gloom.</p>
+        </div>
+        <div class="how-card">
+          <div class="how-ico">🐢</div>
+          <h3>Free the trapped</h3>
+          <p>Turtles in six-pack rings, seals in ghost nets. Swim into them to cut them loose — big bonus, and they'll follow you.</p>
+        </div>
+      </div>
+
+      <div class="controls-split">
+        <div>
+          <h3 class="ctrl-h">Touch</h3>
+          <ul class="ctrl-list">
+            <li><b>Drag anywhere</b> on the left — steer</li>
+            <li><b>⚡ button</b> — boost (hold)</li>
+            <li><b>📡 button</b> — sonar ping</li>
+            <li>Boost straight up to <b>breach</b> the surface</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="ctrl-h">Keyboard</h3>
+          <ul class="ctrl-list">
+            <li><b>WASD</b> / <b>Arrows</b> — swim</li>
+            <li><b>Shift</b> — boost &nbsp;·&nbsp; <b>Space</b> — sonar</li>
+            <li><b>Mouse</b> — steer toward cursor (hold)</li>
+            <li><b>P</b> / <b>Esc</b> — pause &nbsp;·&nbsp; <b>M</b> — mute</li>
+          </ul>
+        </div>
+      </div>
+      <button id="btnHowClose" class="primary-btn slim"><span>GOT IT</span></button>
+    </div>
+  </div>
+
+  <!-- ============ PAUSE ============ -->
+  <div id="pauseScreen" class="overlay hidden">
+    <div class="panel narrow">
+      <h2>Paused</h2>
+      <div class="stat-strip">
+        <div><span id="pScore">0</span><em>score</em></div>
+        <div><span id="pTrash">0</span><em>trash</em></div>
+        <div><span id="pSaved">0</span><em>rescued</em></div>
+      </div>
+      <div class="slider-row">
+        <label for="volMusic">Music</label>
+        <input id="volMusic" type="range" min="0" max="100" value="65" />
+      </div>
+      <div class="slider-row">
+        <label for="volSfx">Effects</label>
+        <input id="volSfx" type="range" min="0" max="100" value="85" />
+      </div>
+      <div class="slider-row toggle-row">
+        <label for="optQuality">Graphics</label>
+        <div class="seg" id="optQuality" role="group">
+          <button data-q="low">Low</button><button data-q="med">Med</button><button data-q="high" class="on">High</button>
+        </div>
+      </div>
+      <button id="btnResume" class="primary-btn slim"><span>RESUME</span></button>
+      <button id="btnQuit" class="ghost-btn wide">Return to title</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <div id="overScreen" class="overlay hidden">
+    <div class="panel">
+      <h2 id="overTitle">Run complete</h2>
+      <p id="overSub" class="over-sub"></p>
+      <div class="result-grid">
+        <div class="result-cell"><span id="rScore">0</span><em>Final score</em></div>
+        <div class="result-cell"><span id="rTrash">0</span><em>Trash removed</em></div>
+        <div class="result-cell"><span id="rSaved">0</span><em>Animals freed</em></div>
+        <div class="result-cell"><span id="rDepth">0m</span><em>Deepest dive</em></div>
+        <div class="result-cell"><span id="rCombo">x1</span><em>Best combo</em></div>
+        <div class="result-cell"><span id="rHealth">0%</span><em>Ocean healed</em></div>
+      </div>
+      <div id="rBest" class="best-flag hidden">★ NEW PERSONAL BEST ★</div>
+      <button id="btnAgain" class="primary-btn"><span>DIVE AGAIN</span></button>
+      <button id="btnMenu" class="ghost-btn wide">Title screen</button>
+    </div>
+  </div>
+
+  <!-- ============ BOOT ============ -->
+  <div id="boot" class="overlay boot">
+    <div class="boot-inner">
+      <div class="boot-ring"><i></i><i></i><i></i></div>
+      <div class="boot-text">SOUNDING THE DEEP…</div>
+    </div>
+  </div>
+
+  <div id="rotateHint" class="rotate-hint"><div>↻<br/>Rotate for the full view</div></div>
+</div>
+
+<script type="module" src="src/main.js"></script>
+<noscript><div class="noscript">This game needs JavaScript enabled.</div></noscript>
+</body>
+</html>

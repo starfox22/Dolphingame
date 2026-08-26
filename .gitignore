@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+_shot.mjs
+_play.mjs
+_diag.mjs
+.DS_Store
