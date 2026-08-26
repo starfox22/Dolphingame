@@ -230,6 +230,14 @@ const ENDINGS = {
       'One more push and you would have made it.',
     ],
   },
+  cleaned: {
+    title: 'The ocean is clean',
+    subs: [
+      'The reef has its colours back. That was you.',
+      'Every net cut, every bottle gone. Look at it now.',
+      'The water runs clear from the shallows to the trench.',
+    ],
+  },
 };
 
 game.onGameOver = (s) => {
@@ -243,6 +251,8 @@ game.onGameOver = (s) => {
   dom.rDepth.textContent = s.deepest + 'm';
   dom.rCombo.textContent = 'x' + s.bestCombo;
   dom.rHealth.textContent = s.health + '%';
+
+  dom.overTitle.classList.toggle('win', s.reason === 'cleaned');
 
   const isBest = s.score > save.best;
   dom.rBest.classList.toggle('hidden', !isBest);

@@ -29,7 +29,7 @@ const DROWN_LIMIT   = 9.5;    // seconds of held breath past empty
 const COMBO_WINDOW  = 3.4;
 const SONAR_CD      = 1.5;
 const SONAR_REACH   = 760;
-const HEAL_TARGET   = 200;    // trash items for a fully healed ocean
+const HEAL_TARGET   = 320;    // weighted pickups for a fully healed ocean
 const METERS_PER_UNIT = 0.25;
 
 export class Game {
@@ -86,6 +86,7 @@ export class Game {
     this.stunned = 0;
     this.health = 0;
     this.warnTimer = 0;
+    this._winTimer = 0;
     this.sonars.length = 0;
     this.particles.clear();
     this.world.health = 0;
@@ -273,6 +274,11 @@ export class Game {
     audio.setEnvironment(d.submerged, depth01, attract ? 0.1 : urgency);
     audio.update(dt);
 
+    if (this._winTimer > 0) {
+      this._winTimer -= dt;
+      if (this._winTimer <= 0) { this.endRun('cleaned'); return; }
+    }
+
     if (!attract) this._hud();
   }
 
@@ -304,7 +310,14 @@ export class Game {
         this.renderer.addFlash(0.2);
         this.renderer.setTint([255, 220, 160], 0.16);
         this.cam.addTrauma(0.18);
-        d.addFollower(e.animal.k.id);
+        const departed = d.addFollower(e.animal.k.id);
+        if (departed) {
+          // Made it to safety. Send it off with something visible so it
+          // reads as an escort completed, not an entity quietly dropped.
+          for (let i = 0; i < 6; i++) this.particles.heart(departed.x, departed.y);
+          this.particles.burst(departed.x, departed.y, 10,
+            { speed: 120, col: [180, 255, 210], life: 0.8 });
+        }
         // Rescues restore a real chunk of breath — mercy, and a hook.
         d.air = Math.min(1, d.air + 0.22);
       }
@@ -332,6 +345,15 @@ export class Game {
         audio.zone();
         this.renderer.setTint([120, 255, 220], 0.14);
       }
+    }
+
+    // Full health wins the run — but not instantly: let the celebration
+    // land before the results panel covers it.
+    if (prev < 1 && this.health >= 1) {
+      this._winTimer = 3.2;
+      audio.rescue();
+      this.renderer.addFlash(0.35);
+      this.cam.addTrauma(0.2);
     }
   }
 
@@ -496,7 +518,7 @@ export class Game {
     const randY = () => lerp(top, bot, Math.random());
 
     // Marine snow everywhere, denser in mid-water.
-    this._snowAcc = (this._snowAcc || 0) + dt * 26 * q;
+    this._snowAcc = (this._snowAcc || 0) + dt * 15 * q;
     while (this._snowAcc >= 1) {
       this._snowAcc--;
       this.particles.snow(randX(), Math.max(b.y0 - 20, 10));
@@ -504,7 +526,7 @@ export class Game {
 
     // Bioluminescent plankton, only meaningful in the dark.
     if (depth01 > 0.4) {
-      this._plankAcc = (this._plankAcc || 0) + dt * (depth01 - 0.4) * 44 * q;
+      this._plankAcc = (this._plankAcc || 0) + dt * (depth01 - 0.4) * 26 * q;
       while (this._plankAcc >= 1) {
         this._plankAcc--;
         this.particles.plankton(randX(), randY());
@@ -514,7 +536,7 @@ export class Game {
     // Suspended filth, which literally clears up as you clean.
     const filth = clamp01(1 - this.health * 1.3);
     if (filth > 0.02) {
-      this._grimeAcc = (this._grimeAcc || 0) + dt * filth * 16 * q;
+      this._grimeAcc = (this._grimeAcc || 0) + dt * filth * 5 * q;
       while (this._grimeAcc >= 1) {
         this._grimeAcc--;
         this.particles.grime(randX(), randY());

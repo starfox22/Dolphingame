@@ -366,6 +366,11 @@ export class Dolphin {
   /* Rescued animals trailing along                              */
   /* ---------------------------------------------------------- */
 
+  /** Max animals trailing at once. Past this the oldest peels off and
+   *  heads for open water — a line of twenty looks absurd and costs
+   *  draw time for nothing. Returns the departing one, if any. */
+  static MAX_FOLLOWERS = 5;
+
   addFollower(kind) {
     const last = this.followers[this.followers.length - 1];
     this.followers.push({
@@ -376,6 +381,9 @@ export class Dolphin {
       phase: Math.random() * TAU,
       wob: 0.6 + Math.random() * 0.8,
     });
+    return this.followers.length > Dolphin.MAX_FOLLOWERS
+      ? this.followers.shift()
+      : null;
   }
 
   _updateFollowers(dt) {

@@ -139,7 +139,7 @@ export class World {
       table.push({ w: 18, k: PROP.ROCK });
       table.push({ w: 12 * (1 - depth01 * 0.6), k: PROP.ANEMONE });
       table.push({ w: 10 * (1 - depth01), k: PROP.SEAGRASS });
-      table.push({ w: 7 * depth01 * depth01 * 34, k: PROP.GLOW_POD });
+      table.push({ w: 26 * Math.pow(depth01, 3), k: PROP.GLOW_POD });
       table.push({ w: 8 * depth01, k: PROP.URCHIN });
 
       const pick = r.weighted(table.filter(t => t.w > 0.1));
