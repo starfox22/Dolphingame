@@ -2,6 +2,8 @@
   "name": "abyssal-ocean-guardian",
   "version": "1.0.0",
   "description": "ABYSSAL — Ocean Guardian: a procedural dolphin game about cleaning the sea.",
+  "private": true,
+  "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8080",
     "serve": "python3 -m http.server 8080"
@@ -13,10 +15,5 @@
   "bugs": {
     "url": "https://github.com/starfox22/Dolphingame/issues"
   },
-  "homepage": "https://github.com/starfox22/Dolphingame#readme",
-  "devDependencies": {
-    "playwright": "^1.62.1"
-  },
-  "type": "module",
-  "private": true
+  "homepage": "https://github.com/starfox22/Dolphingame#readme"
 }
